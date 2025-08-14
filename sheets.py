@@ -1,29 +1,26 @@
 import os
-import json
-import gspread
-from google.oauth2.service_account import Credentials
+import requests
 import pandas as pd
 
 def get_sales_dataframe():
-    sa_json_str = os.environ.get("GOOGLE_SA_JSON")
-    sheet_id = os.environ.get("GOOGLE_SHEET_ID")
-    sheet_name = os.environ.get("SHEET_NAME", "Sheet1")
+    """
+    Fetch sales data from a published Google Apps Script Web App URL
+    that returns JSON (array of objects).
+    """
+    web_app_url = os.environ.get("SHEET_WEBHOOK_URL")
 
-    if not sa_json_str or not sheet_id:
-        raise RuntimeError("Missing GOOGLE_SA_JSON or GOOGLE_SHEET_ID env vars.")
+    if not web_app_url:
+        raise RuntimeError("Missing GOOGLE_SHEET_WEBAPP_URL env var.")
 
-    sa_info = json.loads(sa_json_str)
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets.readonly",
-        "https://www.googleapis.com/auth/drive.readonly",
-    ]
-    creds = Credentials.from_service_account_info(sa_info, scopes=scopes)
-    gc = gspread.authorize(creds)
-    ws = gc.open_by_key(sheet_id).worksheet(sheet_name)
-    data = ws.get_all_records()  # list of dicts
+    # Call the web app
+    resp = requests.get(web_app_url)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Failed to fetch data from web app: {resp.status_code} {resp.text}")
+
+    data = resp.json()  # Expecting list of dicts
     df = pd.DataFrame(data)
 
-    # Normalize column names (trim spaces)
+    # Normalize column names
     df.columns = [str(c).strip() for c in df.columns]
 
     return df

@@ -23,7 +23,7 @@ def extract_filters(user_text: str) -> dict:
     """Call a small model to convert free-form text to strict JSON for filtering."""
     try:
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             temperature=0,
             max_tokens=200,
             messages=[

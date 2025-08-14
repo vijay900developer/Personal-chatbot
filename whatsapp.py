@@ -2,7 +2,7 @@ import os
 import requests
 
 WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
-WHATSAPP_PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_NUMBER_ID")
+WHATSAPP_PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 
 def send_whatsapp_text(body: str, to: str):
     """Send a WhatsApp text message via Cloud API."""
