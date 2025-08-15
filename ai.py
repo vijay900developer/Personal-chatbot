@@ -1,16 +1,7 @@
-import os 
-import requests 
-from datetime 
-import datetime, timedelta 
+import os
+import requests
 import pandas as pd
-
-# Load Google Sheet JSON 
-GOOGLE_SHEET_URL = os.environ["SHEET_WEBAPP_URL"]
-
-def load_sales_data(): 
-    resp = requests.get(GOOGLE_SHEET_URL) 
-    data = resp.json() 
-    return pd.DataFrame(data)
+from datetime import datetime, timedelta   # ✅ correct import
 
 def ask_ai(user_query: str) -> str:
     """
@@ -27,11 +18,3 @@ def ask_ai(user_query: str) -> str:
         return "last_month"
     else:
         return "all"
-
-    total_qty = filtered["Bill_Qty"].astype(int).sum() 
-    total_amount = filtered["Net_Amount"].astype(float).sum()
-    return f"✅ Total sales: {total_qty} pieces worth ₹{total_amount:,.0f}"
-
-    except Exception as e: 
-       print("AI error:", e) 
-       return "⚠️ Sorry, I couldn’t fetch sales data right now."
