@@ -2,10 +2,19 @@ import os
 import json
 import requests
 from flask import Flask, request, jsonify
-from ai import ask_ai
+from ai import ask_ai, calculate_sales_total
 from sheets import get_sales_dataframe, filter_sales
 
 app = Flask(__name__)
+user_query = user_message.lower()
+if "today" in user_query:
+    reply_text = calculate_sales_total("today")
+elif "yesterday" in user_query:
+    reply_text = calculate_sales_total("yesterday")
+elif "last month" in user_query:
+    reply_text = calculate_sales_total("last_month")
+else:
+    reply_text = "Sorry, I didn’t understand. Try asking about sales."
 
 WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
