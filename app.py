@@ -56,6 +56,12 @@ def webhook():
 
             send_whatsapp_message(user_number, reply)
 
+    except Exception as e:
+        print("❌ Webhook error:", str(e))
+
+    return "ok", 200
+
+
 
 def send_whatsapp_message(to_number, text):
     url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
