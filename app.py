@@ -30,30 +30,35 @@ def verify():
 # ✅ Handle Incoming Messages
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.get_json()
-
     try:
-        message = data["entry"][0]["changes"][0]["value"]["messages"][0]
-        user_number = message["from"]
-        user_text = message["text"]["body"]
+        data = request.get_json()
+        print("📩 Incoming:", data)
 
-        # 1️⃣ Send to AI → get filter instructions
-        ai_instruction = ask_ai(user_text)
+        # Navigate to value
+        changes = data.get("entry", [])[0].get("changes", [])[0]
+        value = changes.get("value", {})
 
-        # 2️⃣ Apply filter → get sales result
-        df = get_sales_dataframe()
-        result = filter_sales(df, ai_instruction)
+        # Check if it's a message event
+        if "messages" in value:
+            message = value["messages"][0]
+            user_number = message["from"]
+            user_text = message["text"]["body"]
 
-        # 3️⃣ Ask AI to phrase response
-        final_reply = ask_ai(f"User asked: {user_text}\nResult: {result}\nReply in simple words.")
+            print(f"✅ User {user_number} said: {user_text}")
+            # Call your AI logic here
+            reply = "Got your message!"
+            send_whatsapp_message(user_number, reply)
 
-        # 4️⃣ Send reply back to WhatsApp
-        send_whatsapp_message(user_number, final_reply)
+        # Otherwise it's a delivery/status event
+        elif "statuses" in value:
+            print("ℹ️ Delivery update:", value["statuses"])
+
+        return "OK", 200
 
     except Exception as e:
         print("❌ Webhook error:", e)
+        return "ERROR", 500
 
-    return "ok", 200
 
 
 def send_whatsapp_message(to_number, text):
