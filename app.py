@@ -2,7 +2,8 @@ import os
 import json
 import requests
 from flask import Flask, request, jsonify
-from ai import calculate_sales_total
+from ai import ask_ai, calculate_sales_total
+from sheets import get_sales_dataframe, filter_sales
 
 app = Flask(__name__)
 
@@ -45,26 +46,15 @@ def webhook():
 
             print(f"✅ User {user_number} said: {user_text}")
 
-            # Call your AI logic
-            if "today" in user_text:
-                reply_text = calculate_sales_total("today")
-            elif "yesterday" in user_text:
-                reply_text = calculate_sales_total("yesterday")
-            elif "last month" in user_text:
-                reply_text = calculate_sales_total("last_month")
-            else:
-                reply_text = "❌ Sorry, I didn’t understand. Try asking about *today’s sales, yesterday’s sales, or last month’s sales*."
+            # 🔹 Get filters using AI
+            filters = ask_ai(user_text)
 
-            send_whatsapp_message(user_number, reply_text)
+            # 🔹 Apply filters on Google Sheet
+            df = get_sales_dataframe()
+            filtered = filter_sales(df, filters)
+            reply = calculate_sales_total(filtered)
 
-        elif "statuses" in value:
-            print("ℹ️ Delivery update:", value["statuses"])
-
-        return "OK", 200
-
-    except Exception as e:
-        print("❌ Webhook error:", e)
-        return "ERROR", 500
+            send_whatsapp_message(user_number, reply)
 
 
 def send_whatsapp_message(to_number, text):
