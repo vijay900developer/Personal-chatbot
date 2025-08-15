@@ -2,25 +2,64 @@ import os
 import requests
 import pandas as pd
 
+SHEET_WEBAPP_URL = os.environ.get("SHEET_WEBAPP_URL")
+
 def get_sales_dataframe():
-    """
-    Fetch sales data from a published Google Apps Script Web App URL
-    that returns JSON (array of objects).
-    """
-    web_app_url = os.environ.get("SHEET_WEBHOOK_URL")
+    if not SHEET_WEBAPP_URL:
+        raise RuntimeError("Missing SHEET_WEBAPP_URL environment variable")
 
-    if not web_app_url:
-        raise RuntimeError("Missing GOOGLE_SHEET_WEBAPP_URL env var.")
+    response = requests.get(SHEET_WEBAPP_URL)
+    response.raise_for_status()
+    data = response.json()
 
-    # Call the web app
-    resp = requests.get(web_app_url)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Failed to fetch data from web app: {resp.status_code} {resp.text}")
-
-    data = resp.json()  # Expecting list of dicts
     df = pd.DataFrame(data)
 
-    # Normalize column names
+    # Clean column names
     df.columns = [str(c).strip() for c in df.columns]
 
+    # Convert "Date" column
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y", errors="coerce")
+
+    # Convert Amount to numeric
+    if "Amount" in df.columns:
+        df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
+
     return df
+
+
+def filter_sales(df, filter_info):
+    """
+    filter_info example:
+    {
+        "type": "date_range",
+        "start": "2025-08-01",
+        "end": "2025-08-12"
+    }
+    """
+    if df.empty or "Amount" not in df.columns:
+        return 0
+
+    if filter_info.get("type") == "date_range":
+        start = pd.to_datetime(filter_info["start"])
+        end = pd.to_datetime(filter_info["end"])
+        df_filtered = df[(df["Date"] >= start) & (df["Date"] <= end)]
+        return df_filtered["Amount"].sum()
+
+    elif filter_info.get("type") == "today":
+        today = pd.Timestamp.now().normalize()
+        df_filtered = df[df["Date"] == today]
+        return df_filtered["Amount"].sum()
+
+    elif filter_info.get("type") == "yesterday":
+        yesterday = (pd.Timestamp.now() - pd.Timedelta(days=1)).normalize()
+        df_filtered = df[df["Date"] == yesterday]
+        return df_filtered["Amount"].sum()
+
+    elif filter_info.get("type") == "month":
+        month = filter_info["month"]
+        year = filter_info["year"]
+        df_filtered = df[(df["Date"].dt.month == month) & (df["Date"].dt.year == year)]
+        return df_filtered["Amount"].sum()
+
+    return 0
