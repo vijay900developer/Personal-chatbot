@@ -2,19 +2,9 @@ import os
 import json
 import requests
 from flask import Flask, request, jsonify
-from ai import ask_ai, calculate_sales_total
-from sheets import get_sales_dataframe, filter_sales
+from ai import calculate_sales_total
 
 app = Flask(__name__)
-user_query = user_message.lower()
-if "today" in user_query:
-    reply_text = calculate_sales_total("today")
-elif "yesterday" in user_query:
-    reply_text = calculate_sales_total("yesterday")
-elif "last month" in user_query:
-    reply_text = calculate_sales_total("last_month")
-else:
-    reply_text = "Sorry, I didn’t understand. Try asking about sales."
 
 WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
@@ -51,14 +41,22 @@ def webhook():
         if "messages" in value:
             message = value["messages"][0]
             user_number = message["from"]
-            user_text = message["text"]["body"]
+            user_text = message["text"]["body"].lower()
 
             print(f"✅ User {user_number} said: {user_text}")
-            # Call your AI logic here
-            reply = "Got your message!"
-            send_whatsapp_message(user_number, reply)
 
-        # Otherwise it's a delivery/status event
+            # Call your AI logic
+            if "today" in user_text:
+                reply_text = calculate_sales_total("today")
+            elif "yesterday" in user_text:
+                reply_text = calculate_sales_total("yesterday")
+            elif "last month" in user_text:
+                reply_text = calculate_sales_total("last_month")
+            else:
+                reply_text = "❌ Sorry, I didn’t understand. Try asking about *today’s sales, yesterday’s sales, or last month’s sales*."
+
+            send_whatsapp_message(user_number, reply_text)
+
         elif "statuses" in value:
             print("ℹ️ Delivery update:", value["statuses"])
 
@@ -67,7 +65,6 @@ def webhook():
     except Exception as e:
         print("❌ Webhook error:", e)
         return "ERROR", 500
-
 
 
 def send_whatsapp_message(to_number, text):
