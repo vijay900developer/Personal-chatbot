@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 # Load Google Sheet JSON
-GOOGLE_SHEET_URL = os.environ["GOOGLE_SHEET_URL"]
+GOOGLE_SHEET_URL = os.environ["SHEET_WEBAPP_URL"]
 
 def load_sales_data():
     resp = requests.get(GOOGLE_SHEET_URL)
