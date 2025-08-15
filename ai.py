@@ -1,3 +1,9 @@
+import os 
+import requests 
+from datetime 
+import datetime, timedelta 
+import pandas as pd
+
 def ask_ai(user_query: str) -> str:
     """
     Interpret user query and return filter instructions.
