@@ -12,10 +12,10 @@ services:
         sync: false
       - key: PHONE_NUMBER_ID
         sync: false
-      - key: SHEET_WEBHOOK_URL
+      - key: SHEET_WEBAPP_URL
         sync: false
       - key: SHEET_NAME
         value: "Sales_Data"
-      - key: TZ
-        value: "Asia/Kolkata"
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
     autoDeploy: true
