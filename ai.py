@@ -1,9 +1,31 @@
 import os
+import json
+from openai import OpenAI
 import requests
 import pandas as pd
 from datetime import datetime, timedelta   # ✅ correct import
 
 SHEET_URL = os.environ["SHEET_WEBAPP_URL"]
+
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+def ask_ai(user_query: str) -> dict:
+    prompt = f"""
+    You are an assistant for analyzing sales data.
+    Extract filters from this query: "{user_query}".
+    Possible filters: showroom, product, colour, date range (today, yesterday, last_month, custom).
+    Reply ONLY in JSON.
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    try:
+        return json.loads(response.choices[0].message.content)
+    except:
+        return {"date": "all"}
 def calculate_sales_total(period="today"):
     try:
         response = requests.get(SHEET_URL)
